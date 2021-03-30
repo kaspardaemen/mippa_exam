@@ -1,9 +1,10 @@
 import numpy as np
 import pandas as pd
 from sklearn.model_selection import train_test_split
-from network import build_neural_network, build_conv_network
+from network import build_neural_network, build_as1_network
 from preprocessing import get_data_a
 from sklearn.metrics import accuracy_score
+
 
 import matplotlib.pyplot as plt
 import seaborn as sns
@@ -12,10 +13,11 @@ import seaborn as sns
 # MAIN
 # =============================================================================
 
-n_epochs = 100
+n_epochs = 150
 dropout = 0
 file = 'TrainingValidationData_200k_shuffle.csv'
 events_only = True
+kernel_size = 3
 
 #classes list: [False, True]
 data, labels, df = get_data_a(file)
@@ -29,7 +31,7 @@ data = data[:,indices].reshape(-1,19,4)
 
 X_train, X_test, y_train, y_test = train_test_split(data[indices], labels[indices], test_size=0.2, random_state=42)
 
-model = build_conv_network(X_train.shape[1], dropout)
+model = build_as1_network((19,4), dropout, kernel_size)
 model.compile(loss='categorical_crossentropy', optimizer='adam', metrics=['accuracy'])
 hist = model.fit(X_train, y_train, epochs=n_epochs, batch_size=128, validation_data=(X_test, y_test))
 
