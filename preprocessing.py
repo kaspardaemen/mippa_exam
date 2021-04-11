@@ -15,10 +15,10 @@ def onehot_labels(labels):
     return labels
 
 
-def get_data_a(file):
+def get_data_a1(file):
     # dataframe of [event ID, process ID, weight]
-    df = pd.read_csv(file, sep=';', header=None, usecols=range(0, 3))
-    df.columns = ['event_id', 'process_id', 'event_weight']
+    df = pd.read_csv(file, sep=';', header=None, usecols=range(0, 5))
+    df.columns = ['event_id', 'process_id', 'event_weight', 'MET', 'METphi']
 
     f = open(file, "r")
     data = []
