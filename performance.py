@@ -1,7 +1,8 @@
 import numpy as np
 from sklearn.metrics import accuracy_score
 import matplotlib.pyplot as plt
-from sklearn.metrics import confusion_matrix
+from sklearn.metrics import confusion_matrix, plot_confusion_matrix
+from sklearn.metrics import ConfusionMatrixDisplay
 
 
 # credits: https://www.kaggle.com/benroshan/fake-news-classifier-lstm
@@ -41,21 +42,46 @@ def plot_confusion_matrix(cm, classes,
 
 def check_model_performance_as1(X_test, y_test, model):
     preds = np.array(model.predict(x = X_test))
-    prior = np.array([0.55, 0.45])
 
-    posterior = preds*prior
+    predictions_preds = np.array([np.argmax(x) for x in preds])
+    predictions_real = y_test[:,1]
+
+    print(f'accuracy: {accuracy_score(predictions_real, predictions_preds)}')
+
+    cm = confusion_matrix(predictions_real, predictions_preds, labels=[1, 0], normalize='true')
+    disp = ConfusionMatrixDisplay(confusion_matrix=cm,
+                                  display_labels=['4top', 'background'])
+
+    disp = disp.plot()
+    plt.show()
+
+def check_model_performance_as2(X_test, y_test, model):
+    preds = np.array(model.predict(x = X_test))
+    #prior = np.array([0.55, 0.45])
+
+    #posterior = preds*prior
 
     predictions_preds = np.array([np.argmax(x) for x in preds])
     #predictions_post = np.array([np.argmax(x) for x in posterior])
 
-    predictions_real = y_test[:,1]
+    #predictions_real = y_test[:,1]
+    predictions_real = np.array([np.argmax(x) for x in y_test])
 
 
     print(f'accuracy: {accuracy_score(predictions_real, predictions_preds)}')
+
+    cm = confusion_matrix(predictions_real, predictions_preds, labels=[0,1,2,3,4], normalize='true')
+    disp = ConfusionMatrixDisplay(confusion_matrix=cm,
+                                  display_labels=['4top', 'ttbar', 'ttbarHiggs', 'ttbarW', 'ttbarZ'])
+
+    disp = disp.plot()
+    plt.show()
+
+
     #print(f'posterior: {accuracy_score(predictions_real, predictions_post)}')
 
-    cm = confusion_matrix(predictions_real, predictions_preds, normalize='true')
-    plot_confusion_matrix(cm, classes=['background','4top'])
+    # cm = confusion_matrix(predictions_real, predictions_preds, normalize='true')
+    # plot_confusion_matrix(cm, classes=['background','4top'])
 
 
 

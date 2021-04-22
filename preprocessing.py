@@ -15,7 +15,7 @@ def onehot_labels(labels):
     return labels
 
 
-def get_data_a1(file):
+def process_data(file):
     # dataframe of [event ID, process ID, weight]
     df = pd.read_csv(file, sep=';', header=None, usecols=range(0, 5))
     df.columns = ['event_id', 'process_id', 'event_weight', 'MET', 'METphi']
@@ -46,6 +46,14 @@ def get_data_a1(file):
     scaler.fit(padded_data)
     transformed_data = scaler.transform(padded_data)
 
+    return transformed_data, df
+
+
+def get_data_a1(file):
+
+    #data
+    transformed_data, df = process_data(file)
+
     # labels
     labels = np.array(df['process_id'])
     foreground = labels == '4top'
@@ -56,3 +64,18 @@ def get_data_a1(file):
     print(
         f'number of foreground samples: {len(binary_labels[binary_labels == 1])}\nnumber of background samples: {len(binary_labels[binary_labels == 0])}')
     return transformed_data, binary_labels, df
+
+
+def get_data_a2(file):
+    # data
+    transformed_data, df = process_data(file)
+
+    # labels
+    labels = np.array(df['process_id'])
+    # transform from boolean to vector
+    binary_labels = onehot_labels(labels)
+
+    print(
+        f'number of foreground samples: {len(binary_labels[binary_labels == 1])}\nnumber of background samples: {len(binary_labels[binary_labels == 0])}')
+    return transformed_data, binary_labels, df
+
