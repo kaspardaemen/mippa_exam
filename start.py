@@ -7,8 +7,9 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 from sklearn.metrics import confusion_matrix, accuracy_score
 from keras.models import load_model
-from performance import check_model_performance_as1, check_model_performance_as2
+from performance import check_model_performance_as1, check_model_performance_as2, check_model_performance_as3
 import statsmodels.api as sm
+from keras_balanced_batch_generator import make_generator
 
 def regression():
     file = 'TrainingValidationData_200k_shuffle.csv'
@@ -144,13 +145,21 @@ def check_performance(model_name):
     elif(y_test.shape[1] == 2):
         check_model_performance_as1(X_test, y_test, model)
 
+#takes an task C model to do task A
+def check_performance_as3(model_name):
+    model = load_model(f'{model_name}.h5')
+    X_test = np.load(f'X_test_{model_name}.npy')
+    y_test = np.load(f'y_test_{model_name}.npy')
+
+    check_model_performance_as3(X_test, y_test, model)
+
 
 if __name__ == "__main__":
     #as1: 2 classes
     #as2: 5 classes
 
-    build_multi_input_2(2, (16,4), dropout=0.2, output=2)
+    #build_multi_input_2(2, (16,4), dropout=0.2, output=2)
 
-    #train_simple('simple')
-    #check_performance('simple')
+    #train_as2('as2')
+    check_performance('as1')
 
