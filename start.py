@@ -2,32 +2,42 @@ import numpy as np
 import pandas as pd
 from sklearn.model_selection import train_test_split
 from network import train_network_conv_2, train_network_conv_5  , train_simple_network, train_simple_network_as2, train_multi_input_2
-from preprocessing import get_data_a1, get_data_a2, own_train_test_split
+from preprocessing import  get_data, load_data, make_conv_ready
 import matplotlib.pyplot as plt
 import seaborn as sns
 from sklearn.metrics import confusion_matrix, accuracy_score
 from keras.models import load_model
-from performance import check_model_performance_as1, check_model_performance_as2, check_model_performance_as3
+from performance import check_model_performance_as1, check_model_performance_as2, check_model_performance_as3, get_binary_results, get_test_probs
 import statsmodels.api as sm
 from keras.utils.vis_utils import plot_model
+sns.set()
+np.random.seed(42)
 
 
-
-def train_simple(model_name):
+def preprocess_general_data ():
     file = 'TrainingValidationData_200k_shuffle.csv'
-    dropout = 0.25
+    data, labels, df = get_data(file)
 
-    # classes list: [False, True]
-    data, labels, df = get_data_a1(file)
     X_train, X_test, y_train, y_test = train_test_split(data, labels, test_size=0.2, random_state=42)
 
+    np.save(f'data/X_test.npy', X_test)
+    np.save(f'data/y_test.npy', y_test)
+    np.save(f'data/X_train.npy', X_train)
+    np.save(f'data/y_train.npy', y_train)
+
+    y_train_binary =  [ np.array([1-y, y*1]) for y in y_train[:,0] == 1]
+    y_test_binary = [np.array([1-y , y*1]) for y in y_test[:, 0] == 1]
+
+    np.save(f'data/y_test_binary.npy', y_test_binary)
+    np.save(f'data/y_train_binary.npy', y_train_binary)
+def train_simple_as1(model_name):
+    dropout = 0.25
+
+    #2 this is TaskA with 2 output classes
+    X_train, X_test, y_train, y_test = load_data(binary=True)
 
     model, hist = train_simple_network(X_train, X_test, y_train, y_test, name=model_name, dropout=dropout)
 
-
-    np.save(f'data/X_test_{model_name}.npy', X_test)
-    np.save(f'data/y_test_{model_name}.npy', y_test)
-
     hist_df = pd.DataFrame(hist.history)
     hist_df['epoch'] = hist_df.index + 1
     vals = ['accuracy', 'val_accuracy']
@@ -36,21 +46,16 @@ def train_simple(model_name):
     plt.show()
     sns.lineplot(data=hist_df[['loss', 'val_loss']])
     plt.show()
-
 def train_simple_as2(model_name):
-    file = 'TrainingValidationData_200k_shuffle.csv'
     dropout = 0.25
 
-    # classes list: [False, True]
-    data, labels, df = get_data_a2(file)
-    X_train, X_test, y_train, y_test = train_test_split(data, labels, test_size=0.2, random_state=42)
+    # outptut=5 this is TaskB with 5 output classes
+    X_train, X_test, y_train, y_test = load_data(binary=False)
 
-    output = labels.shape[1]
+    output = y_train.shape[1]
 
     model, hist = train_simple_network_as2(X_train, X_test, y_train, y_test, name=model_name, dropout=dropout, output=output)
 
-    np.save(f'data/X_test_{model_name}.npy', X_test)
-    np.save(f'data/y_test_{model_name}.npy', y_test)
 
     hist_df = pd.DataFrame(hist.history)
     hist_df['epoch'] = hist_df.index + 1
@@ -60,26 +65,21 @@ def train_simple_as2(model_name):
     plt.show()
     sns.lineplot(data=hist_df[['loss', 'val_loss']])
     plt.show()
-
-
 def train_as1(model_name):
-    dropout = 0.4
-    file = 'TrainingValidationData_200k_shuffle.csv'
+    dropout = 0.25
     events_only = True
-    kernel_size = 1
+    kernel_size = 3
 
     # classes list: [False, True]
-    data, labels, df = get_data_a1(file)
+    X_train, X_test, y_train, y_test = load_data(binary=True)
 
-    # don't use met data for conv. network
-    indices = range(data.shape[1])
-    if (events_only):
-        indices = indices[2:]
-    data = data[:, indices].reshape(-1, 19, 4)
+    # don't use met and metPHI data for conv. network
 
 
+    #transform the data to a proper input for a 1d convolutional network
+    X_train = make_conv_ready(X_train)
+    X_test = make_conv_ready(X_test)
 
-    X_train, X_test, y_train, y_test = train_test_split(data, labels, test_size=0.2, random_state=42)
     model, hist = train_network_conv_2(X_train, X_test, y_train, y_test, kernel_size=kernel_size, name=model_name,
                                     dropout=dropout)
     np.save(f'data/X_test_{model_name}.npy', X_test)
@@ -93,29 +93,22 @@ def train_as1(model_name):
     plt.show()
     sns.lineplot(data=hist_df[['loss', 'val_loss']])
     plt.show()
-
 def train_as2(model_name):
-    dropout = 0.4
-    file = 'TrainingValidationData_200k_shuffle.csv'
-    events_only = True
+    dropout = 0.2
+
     kernel_size = 3
     batch_size = 128
 
-    # classes list: [False, True]
-    data, labels, df = get_data_a2(file)
+    # 5 this is TaskB with 5 output classes
+    X_train, X_test, y_train, y_test = load_data(binary=False)
 
     # don't use met data for conv. network
-    indices = range(data.shape[1])
-    if (events_only):
-        indices = indices[2:]
-    data = data[:, indices].reshape(-1, 19, 4)
-
-    X_train, X_test, y_train, y_test = train_test_split(data, labels, test_size=0.2, random_state=42)
-
-
+    # transform the data to a proper input for a 1d convolutional network
+    X_train = make_conv_ready(X_train)
+    X_test = make_conv_ready(X_test)
 
     model, hist = train_network_conv_5(X_train, X_test, y_train, y_test, kernel_size=kernel_size, name=model_name,
-                                    dropout=dropout, output=labels.shape[1])
+                                    dropout=dropout, output=5)
     np.save(f'data/X_test_{model_name}.npy', X_test)
     np.save(f'data/y_test_{model_name}.npy', y_test)
 
@@ -127,7 +120,6 @@ def train_as2(model_name):
     plt.show()
     sns.lineplot(data=hist_df[['loss', 'val_loss']])
     plt.show()
-
 def train_mi_2(model_name):
     dropout = 0.2
     file = 'TrainingValidationData_200k_shuffle.csv'
@@ -135,7 +127,7 @@ def train_mi_2(model_name):
     batch_size = 128
 
     # classes list: [False, True]
-    data, labels, df = get_data_a2(file)
+    data, labels, df = get_data(file)
 
     # don't use met data for conv. network
     indices = range(data.shape[1])
@@ -147,7 +139,7 @@ def train_mi_2(model_name):
 
     data = [(dense_data[i], conv_data[i]) for i in range(len(conv_data))]
 
-    X_train, X_test, y_train, y_test =  train_test_split(data, labels, test_size=0.2)
+    X_train, X_test, y_train, y_test =  train_test_split(data, labels, test_size=0.2, random_state=42)
 
     model, hist = train_multi_input_2(X_train, X_test, y_train, y_test, kernel_size=kernel_size, name=model_name,
                                     dropout=dropout, output=labels.shape[1])
@@ -162,38 +154,100 @@ def train_mi_2(model_name):
     plt.show()
     sns.lineplot(data=hist_df[['loss', 'val_loss']])
     plt.show()
-
-def check_performance(model_name):
+def check_performance(model_name, binary=True, conv=False):
     model = load_model(f'models/{model_name}.h5')
+    _, X_test, _, y_test = load_data(binary)
+    if (conv):
+        X_test = make_conv_ready(X_test)
     plot_model(model, to_file=f'models/model_{model_name}.png', show_shapes=True, show_layer_names=True)
-    X_test = np.load(f'data/X_test_{model_name}.npy')
-    y_test = np.load(f'data/y_test_{model_name}.npy')
 
     if(y_test.shape[1] == 5):
         check_model_performance_as2(X_test, y_test, model)
     elif(y_test.shape[1] == 2):
         check_model_performance_as1(X_test, y_test, model)
-
 #takes an task C model to do task A
-def check_performance_as3(model_name, threshold):
+def check_performance_as3(model_name, binary=True, conv=False, threshold=.5):
 
     model = load_model(f'models/{model_name}.h5')
-    plot_model(model, to_file=f'model_{model_name}.png', show_shapes=True, show_layer_names=True)
-    X_test = np.load(f'data/X_test_{model_name}.npy')
-    y_test = np.load(f'data/y_test_{model_name}.npy')
+    #plot_model(model, to_file=f'model_{model_name}.png', show_shapes=True, show_layer_names=True)
+    _, X_test, _, y_test = load_data(binary)
+    if (conv):
+        X_test = make_conv_ready(X_test)
 
     check_model_performance_as3(X_test, y_test, model, threshold)
+def plot_combined_perfomances():
+    binary_models = ['simple', 'conv_2', 'mi_2']
+
+    results = {}
+
+    for model_name in binary_models:
+        model = load_model(f'models/{model_name}.h5')
+        plot_model(model, to_file=f'model_{model_name}.png', show_shapes=True, show_layer_names=True)
+        X_test = np.load(f'data/X_test_{model_name}.npy')
+        y_test = np.load(f'data/y_test_{model_name}.npy')
+
+        fpr, tpr, auc = get_binary_results(X_test, y_test, model )
+        results[f'{model_name}'] = [fpr, tpr, auc]
+
+
+    for model_name, values in results.items():
+        plt.plot(values[0], values[1], label = f'{model_name}: {values[2]}')
+    plt.xlabel('fpr')
+    plt.ylabel('tpr')
+
+    plt.title('combined plot of the roc curves')
+    plt.legend()
+    plt.show()
+
+def produce_test_results(model_name, binary=False, conv=False):
+    file = 'ExamData.csv'
+    data, _, df = get_data(file)
+    if(conv):
+        data = make_conv_ready(data)
+    model = load_model(f'models/{model_name}.h5')
+
+    output_probs = get_test_probs(model, data)
+
+    if (binary):
+        results = {'prob': [f'4top={x[1]}' for x in output_probs]}
+        df = pd.DataFrame.from_dict(results, orient='columns')
+        df.to_csv('TEST_RESULTS_BINARY.csv', index=True, header=False)
+        return
+
+    classes = ['4top', 'ttbar', 'ttbarHiggs', 'ttbarW', 'ttbarZ']
+    results = {}
+    #results['event_id'] = range(0, len(output_probs))
+    for i in range(len(classes)):
+        results[classes[i]] = [f'{classes[i]}={x[i]}' for x in output_probs]
+    df = pd.DataFrame.from_dict(results, orient='columns')
+    df.to_csv('TEST_RESULTS_MULTIPLE.csv',index=True, header=False)
 
 
 if __name__ == "__main__":
-    #as1: 2 classes
-    #as2: 5 classes
+    #as1: --> task A with 2 output classes
+    #as2: --> task B with  5  output classes
+    #as3: --> task C with 2 output classes
+    #TASK D: the conv solutions
 
-    #train_as1('conv_2')
-    check_performance_as3('simple', 0.5)
+    produce_test_results('simple', binary=True)
 
-    #train_mi_2('mi_2')
+    #train_simple_as2('simple_5')
+    #check_performance('simple_5', binary=False)
+
+
+
+    #check_performance_as3('simple_5', 0.5)
+
+    #train_as2('conv_5')
+    #check_performance_as3('conv_5', binary=False, conv= True)
 
     #train_as2('balanced_as2')
     #check_performance_as3('balanced_as2')
+
+    #plot_combined_perfomances()
+
+    #train_mi_2('mi_2')
+    #check_performance('mi_2')
+
+    #preprocess_general_data()
 

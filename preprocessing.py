@@ -1,18 +1,27 @@
+
 from sklearn import preprocessing
 from keras.utils import np_utils
 import numpy as np
 import pandas as pd
 
-def own_train_test_split(data, labels, test_size=0.2):
+def make_conv_ready(data):
+    indices = range(data.shape[1])
+    indices = indices[2:]
+    transformed_data = data[:, indices].reshape(-1, 19, 4)
+    return transformed_data
 
-    size = data.shape[0]
-    indices = range(1,size+1)
 
-    test_indices = np.random.choice(indices, size=test_size*size, replace=False, p=None)
-    train_indices = indices - test_indices
+def load_data(binary=True):
+    X_test = np.load(f'data/X_test.npy')
+    X_train = np.load(f'data/X_train.npy')
 
-    print('hallo')
-
+    if(binary):
+        y_test = np.load(f'data/y_test_binary.npy')
+        y_train = np.load(f'data/y_train_binary.npy')
+        return X_train, X_test, y_train, y_test
+    y_test = np.load(f'data/y_test.npy')
+    y_train = np.load(f'data/y_train.npy')
+    return X_train, X_test, y_train, y_test
 
 def onehot_labels(labels):
     le = preprocessing.LabelEncoder()
@@ -23,8 +32,6 @@ def onehot_labels(labels):
     labels = np_utils.to_categorical(labels_le, n_classes)
     print(f'classes list: {classes_list}')
     return labels
-
-
 def process_data(file):
     # dataframe of [event ID, process ID, weight]
     df = pd.read_csv(file, sep=';', header=None, usecols=range(0, 5))
@@ -47,7 +54,8 @@ def process_data(file):
 
 
 
-    max_length = np.max([len(x) for x in data])
+    #max_length = np.max([len(x) for x in data])
+    max_length = 78 #hacky, but otherwise the models cannot handle the test data
 
     # pad data
     padded_data = []
@@ -62,33 +70,16 @@ def process_data(file):
     return transformed_data, df
 
 
-def get_data_a1(file):
-
-    #data
-    transformed_data, df = process_data(file)
-
-    # labels
-    labels = np.array(df['process_id'])
-    foreground = labels == '4top'
-
-    #transform from boolean to vector
-    binary_labels = onehot_labels(foreground )
-
-    print(
-        f'number of foreground samples: {len(binary_labels[binary_labels == 1])}\nnumber of background samples: {len(binary_labels[binary_labels == 0])}')
-    return transformed_data, binary_labels, df
-
-
-def get_data_a2(file):
+def get_data(file):
     # data
     transformed_data, df = process_data(file)
 
     # labels
     labels = np.array(df['process_id'])
     # transform from boolean to vector
-    binary_labels = onehot_labels(labels)
+    one_hot_labels = onehot_labels(labels)
 
     print(
-        f'number of foreground samples: {len(binary_labels[binary_labels == 1])}\nnumber of background samples: {len(binary_labels[binary_labels == 0])}')
-    return transformed_data, binary_labels, df
+        f'number of foreground samples: {len(one_hot_labels[one_hot_labels[:,0] == 1])}\nnumber of background samples: {len(one_hot_labels[one_hot_labels[:,0] == 0])}')
+    return transformed_data, one_hot_labels, df
 

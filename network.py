@@ -25,23 +25,23 @@ def build_multi_input_2(simple_input, conv_input, dropout, output=2, kernel_size
 
     #conv side
     conv_input = Input(shape=(conv_input), name='conv')
-    conv_output = Conv1D(filters=64, kernel_size=kernel_size, padding='same', activation='relu')(conv_input)
-    conv_output = Conv1D(filters=64, kernel_size=kernel_size, padding='same', activation='relu')(conv_output)
+    conv_output = Conv1D(filters=16, kernel_size=kernel_size, padding='same', activation='relu')(conv_input)
+    conv_output = Conv1D(filters=16, kernel_size=kernel_size, padding='same', activation='relu')(conv_output)
+    conv_output = Dropout(dropout)(conv_output)
+    conv_output = MaxPooling1D(pool_size=2)(conv_output)
+
+    conv_output = Conv1D(filters=32, kernel_size=kernel_size, padding='same', activation='relu')(conv_output)
+    conv_output = Conv1D(filters=32, kernel_size=kernel_size, padding='same', activation='relu')(conv_output)
     conv_output = Dropout(dropout)(conv_output)
     conv_output = MaxPooling1D(pool_size=2)(conv_output)
 
     conv_output = Conv1D(filters=64, kernel_size=kernel_size, padding='same', activation='relu')(conv_output)
     conv_output = Conv1D(filters=64, kernel_size=kernel_size, padding='same', activation='relu')(conv_output)
-    conv_output = Dropout(dropout)(conv_output)
-    conv_output = MaxPooling1D(pool_size=2)(conv_output)
-
-    conv_output = Conv1D(filters=128, kernel_size=kernel_size, padding='same', activation='relu')(conv_output)
-    conv_output = Conv1D(filters=128, kernel_size=kernel_size, padding='same', activation='relu')(conv_output)
     conv_output = Dropout(dropout)(conv_output)
     conv_output = MaxPooling1D(pool_size=2)(conv_output)
 
     conv_output = Flatten()(conv_output)
-    conv_output = Dense(100, activation='relu')(conv_output)
+    conv_output = Dense(16, activation='relu')(conv_output)
 
     concatenated = layers.concatenate([dense_output, conv_output])
     concatenated = layers.Dense(32, activation="relu")(concatenated)
@@ -52,7 +52,6 @@ def build_multi_input_2(simple_input, conv_input, dropout, output=2, kernel_size
     model.summary()
     plot_model(model, to_file='model_plot.png', show_shapes=True, show_layer_names= True)
     return model
-
 def train_multi_input_2(X_train, X_test, y_train, y_test,  name="simple", dropout=0.2, output=2, kernel_size = 3):
 
     conv_size_in = (19, 4)
@@ -89,8 +88,6 @@ def train_multi_input_2(X_train, X_test, y_train, y_test,  name="simple", dropou
                         validation_data=([X_test_dense,X_test_conv], y_test), verbose=1)
 
     return model, history
-
-
 def build_neural_network(data_size_in, dropout, output=2):
 
     model = Sequential()
@@ -115,37 +112,29 @@ def build_neural_network(data_size_in, dropout, output=2):
     model.summary()
 
     return model
-
-
 def build_conv_network(data_size_in, dropout, kernel_size=3, output=2):
-    dropout = dropout
 
     model = Sequential()
-    model.add(Conv1D(filters=64, kernel_size=kernel_size, padding='same', activation='relu', input_shape=data_size_in))
-    model.add(Conv1D(filters=64, kernel_size=kernel_size, padding='same', activation='relu'))
+    model.add(Conv1D(filters=16, kernel_size=kernel_size, padding='same', activation='relu', input_shape=data_size_in))
+    model.add(Conv1D(filters=16, kernel_size=kernel_size, padding='same', activation='relu'))
+    model.add(Dropout(dropout))
+    model.add(MaxPooling1D(pool_size=2))
+
+    model.add(Conv1D(filters=32, kernel_size=kernel_size, padding='same', activation='relu'))
+    model.add(Conv1D(filters=32, kernel_size=kernel_size, padding='same', activation='relu'))
     model.add(Dropout(dropout))
     model.add(MaxPooling1D(pool_size=2))
 
     model.add(Conv1D(filters=64, kernel_size=kernel_size, padding='same', activation='relu'))
     model.add(Conv1D(filters=64, kernel_size=kernel_size, padding='same', activation='relu'))
-    model.add(Dropout(dropout))
-    model.add(MaxPooling1D(pool_size=2))
-
-    model.add(Conv1D(filters=128, kernel_size=kernel_size, padding='same', activation='relu'))
-    model.add(Conv1D(filters=128, kernel_size=kernel_size, padding='same', activation='relu'))
     model.add(Dropout(dropout))
     model.add(MaxPooling1D(pool_size=2))
 
     model.add(Flatten())
-    model.add(Dense(100, activation='relu'))
+    model.add(Dense(16, activation='relu'))
     model.add(Dense(output, activation='softmax'))
     model.summary()
     return model
-
-
-
-
-
 def train_simple_network(X_train, X_test, y_train, y_test, name="simple", dropout=0.2, output=2):
 
     model = build_neural_network(X_train.shape[1], dropout, output)
@@ -158,7 +147,7 @@ def train_simple_network(X_train, X_test, y_train, y_test, name="simple", dropou
         ),
         # save the weights into best_model.h5 every time the val loss has improved
         keras.callbacks.ModelCheckpoint(
-            filepath='{0}.h5'.format(name),
+            filepath='models/{0}.h5'.format(name),
             monitor='val_loss',
             save_best_only=True
         )
@@ -172,7 +161,6 @@ def train_simple_network(X_train, X_test, y_train, y_test, name="simple", dropou
                         validation_data=(X_test, y_test), verbose=1)
 
     return model, history
-
 def train_simple_network_as2(X_train, X_test, y_train, y_test, name="simple", dropout=0.2, output=2):
 
     model = build_neural_network(X_train.shape[1], dropout, output)
@@ -185,7 +173,7 @@ def train_simple_network_as2(X_train, X_test, y_train, y_test, name="simple", dr
         ),
         # save the weights into best_model.h5 every time the val loss has improved
         keras.callbacks.ModelCheckpoint(
-            filepath='{0}.h5'.format(name),
+            filepath='models/{0}.h5'.format(name),
             monitor='val_loss',
             save_best_only=True
         )
@@ -199,8 +187,6 @@ def train_simple_network_as2(X_train, X_test, y_train, y_test, name="simple", dr
                         validation_data=(X_test, y_test), verbose=1)
 
     return model, history
-
-
 def train_network_conv_2(X_train, X_test, y_train, y_test, name="model", dropout=0.2, kernel_size=3, output=2):
     data_size_in = (19, 4)
     model = build_conv_network(data_size_in, dropout, kernel_size, output)
@@ -212,7 +198,7 @@ def train_network_conv_2(X_train, X_test, y_train, y_test, name="model", dropout
         ),
         # save the weights into best_model.h5 every time the val loss has improved
         keras.callbacks.ModelCheckpoint(
-            filepath='{0}.h5'.format(name),
+            filepath='models/{0}.h5'.format(name),
             monitor='val_loss',
             save_best_only=True
         )
@@ -226,7 +212,6 @@ def train_network_conv_2(X_train, X_test, y_train, y_test, name="model", dropout
                         validation_data=(X_test, y_test), verbose=5)
 
     return model, history
-
 def train_network_conv_5(X_train, X_test, y_train, y_test, name="model", dropout=0.2, kernel_size=3, output=2):
 
     data_size_in = (19, 4)
@@ -239,7 +224,7 @@ def train_network_conv_5(X_train, X_test, y_train, y_test, name="model", dropout
         ),
         # save the weights into best_model.h5 every time the val loss has improved
         keras.callbacks.ModelCheckpoint(
-            filepath='{0}.h5'.format(name),
+            filepath='models/{0}.h5'.format(name),
             monitor='val_loss',
             save_best_only=True
         )
