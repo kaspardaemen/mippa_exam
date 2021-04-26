@@ -3,6 +3,16 @@ from keras.utils import np_utils
 import numpy as np
 import pandas as pd
 
+def own_train_test_split(data, labels, test_size=0.2):
+
+    size = data.shape[0]
+    indices = range(1,size+1)
+
+    test_indices = np.random.choice(indices, size=test_size*size, replace=False, p=None)
+    train_indices = indices - test_indices
+
+    print('hallo')
+
 
 def onehot_labels(labels):
     le = preprocessing.LabelEncoder()
@@ -30,9 +40,12 @@ def process_data(file):
         # append low-level features
         low_level = [x for x in line.split(';')[5:-1]]
         low_lvl_fs = np.array([x.split(',')[1:] for x in low_level]).reshape(-1)
+
         features = np.concatenate((met_fs, low_lvl_fs))
 
         data.append(features)
+
+
 
     max_length = np.max([len(x) for x in data])
 
