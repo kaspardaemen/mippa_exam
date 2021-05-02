@@ -233,36 +233,36 @@ def produce_test_results(model_name, binary=False, conv=False):
 
 
 if __name__ == "__main__":
-    #preprocess_general_data()
+    preprocess_general_data()
 
     # --------------------------------------------
     #task A (as1) with 2 output classes
     # --------------------------------------------
 
-    #train_simple_as1('simple_2')
-    #check_performance('simple_2')
+    train_simple_as1('simple_2')
+    check_performance('simple_2')
 
     #--------------------------------------------
     #task B (as2) with  5  output classes
     #--------------------------------------------
 
-    #train_simple_as2('simple_5')
+    train_simple_as2('simple_5')
     check_performance('simple_5', binary=False)
 
     # --------------------------------------------
     # task C (as2) with  5  output classes
     # --------------------------------------------
 
-    #check_performance_as3('simple_5', conv=False, binary=False, threshold=.25)
+    check_performance_as3('simple_5', conv=False, binary=False, threshold=.25)
 
 
     #as3: --> task C with 2 output classes
     #TASK D: the conv solutions
 
-    # train_as1('conv_2')
-    # check_performance('conv_2', binary=True, conv=True)
+    train_as1('conv_2')
+    check_performance('conv_2', binary=True, conv=True)
 
 
-    #plot_combined_perfomances()
-    #produce_test_results('simple_5', binary=False)
+    plot_combined_perfomances()
+    produce_test_results('simple_5', binary=False)
 
