@@ -91,19 +91,18 @@ def train_multi_input_2(X_train, X_test, y_train, y_test,  name="simple", dropou
 def build_neural_network(data_size_in, dropout, output=2):
 
     model = Sequential()
-    model.add(Dense(32, input_dim=data_size_in,  activation='relu'))
-    # model.add(BatchNormalization())
-    model.add(Dropout(dropout))
-
-    model.add(Dense(32, activation='relu'))
-    # model.add(BatchNormalization())
-    model.add(Dropout(dropout))
-
+    model.add(Dense(64, input_dim=data_size_in,  activation='relu'))
     model.add(Dense(64, activation='relu'))
     # model.add(BatchNormalization())
     model.add(Dropout(dropout))
 
-    model.add(Dense(64, activation='relu'))
+    model.add(Dense(128, activation='relu'))
+    model.add(Dense(128, activation='relu'))
+    # model.add(BatchNormalization())
+    model.add(Dropout(dropout))
+
+    model.add(Dense(256, activation='relu'))
+    model.add(Dense(256, activation='relu'))
     # model.add(BatchNormalization())
     model.add(Dropout(dropout))
 
@@ -116,22 +115,22 @@ def build_conv_network(data_size_in, dropout, kernel_size=3, output=2):
 
     model = Sequential()
     model.add(Conv1D(filters=16, kernel_size=kernel_size, padding='same', activation='relu', input_shape=data_size_in))
-    model.add(Conv1D(filters=16, kernel_size=kernel_size, padding='same', activation='relu'))
     model.add(Dropout(dropout))
     model.add(MaxPooling1D(pool_size=2))
 
     model.add(Conv1D(filters=32, kernel_size=kernel_size, padding='same', activation='relu'))
+    model.add(Dropout(dropout))
+    model.add(MaxPooling1D(pool_size=2))
+
     model.add(Conv1D(filters=32, kernel_size=kernel_size, padding='same', activation='relu'))
     model.add(Dropout(dropout))
     model.add(MaxPooling1D(pool_size=2))
 
     model.add(Conv1D(filters=64, kernel_size=kernel_size, padding='same', activation='relu'))
-    model.add(Conv1D(filters=64, kernel_size=kernel_size, padding='same', activation='relu'))
     model.add(Dropout(dropout))
-    model.add(MaxPooling1D(pool_size=2))
 
     model.add(Flatten())
-    model.add(Dense(16, activation='relu'))
+    model.add(Dense(32, activation='relu'))
     model.add(Dense(output, activation='softmax'))
     model.summary()
     return model
@@ -161,7 +160,7 @@ def train_simple_network(X_train, X_test, y_train, y_test, name="simple", dropou
                         validation_data=(X_test, y_test), verbose=1)
 
     return model, history
-def train_simple_network_as2(X_train, X_test, y_train, y_test, name="simple", dropout=0.2, output=2):
+def train_simple_network_as2(X_train, X_test, y_train, y_test, name="simple", dropout=0.2, output=5):
 
     model = build_neural_network(X_train.shape[1], dropout, output)
 
@@ -181,10 +180,20 @@ def train_simple_network_as2(X_train, X_test, y_train, y_test, name="simple", dr
 
     batch_size = 128
     epochs = 15
+    steps_per_epoch = 128
 
+    generator = make_generator(X_train, y_train, batch_size)
     model.compile(loss='categorical_crossentropy', optimizer='adam', metrics=['accuracy'])
-    history = model.fit(X_train, y_train, batch_size=batch_size, epochs=epochs, callbacks=callbacks_list,
-                        validation_data=(X_test, y_test), verbose=1)
+
+    history = model.fit(
+        generator,
+        steps_per_epoch=steps_per_epoch,
+        epochs=epochs,
+        verbose=5,
+        validation_data=(X_test, y_test)
+    )
+
+    model.save("models/{0}.h5".format(name))
 
     return model, history
 def train_network_conv_2(X_train, X_test, y_train, y_test, name="model", dropout=0.2, kernel_size=3, output=2):
@@ -230,13 +239,31 @@ def train_network_conv_5(X_train, X_test, y_train, y_test, name="model", dropout
         )
     ]
 
+    steps_per_epoch = 128
+    batch_size = 128
+    n_epochs = 15
+
+    generator = make_generator(X_train, y_train, batch_size)
+    model.compile(loss='categorical_crossentropy', optimizer='adam', metrics=['accuracy'])
+
+    history = model.fit(
+        generator,
+        steps_per_epoch=steps_per_epoch,
+        epochs=n_epochs,
+        verbose=5,
+        validation_data=(X_test, y_test)
+    )
+
+    model.save("models/{0}.h5".format(name))
+
 
     batch_size = 128
     epochs = 15
 
 
-    model.compile(loss='categorical_crossentropy', optimizer='adam', metrics=['accuracy'])
-    history = model.fit(X_train, y_train, batch_size=batch_size, epochs=epochs, callbacks=callbacks_list,
-                        validation_data=(X_test, y_test), verbose=2)
+
+    # model.compile(loss='categorical_crossentropy', optimizer='adam', metrics=['accuracy'])
+    # history = model.fit(X_train, y_train, batch_size=batch_size, epochs=epochs, callbacks=callbacks_list,
+    #                     validation_data=(X_test, y_test), verbose=2)
 
     return model, history
